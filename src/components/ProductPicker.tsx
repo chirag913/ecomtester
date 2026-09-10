@@ -1,11 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useProducts } from "@/lib/storage";
 import { Card, PrimaryButton } from "@/components/ui";
 
 export function ProductPicker({ destination, title }: { destination: (id: string) => string; title: string }) {
   const products = useProducts();
+  const router = useRouter();
+
+  const onlyProductId = products.length === 1 ? products[0].id : null;
+
+  useEffect(() => {
+    if (onlyProductId) router.replace(destination(onlyProductId));
+  }, [onlyProductId, router, destination]);
+
+  if (onlyProductId) return null;
 
   if (products.length === 0) {
     return (

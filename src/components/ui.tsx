@@ -25,7 +25,7 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-type StatusColor = "green" | "yellow" | "red" | "blue" | "neutral";
+export type StatusColor = "green" | "yellow" | "red" | "blue" | "neutral";
 
 const statusStyles: Record<StatusColor, string> = {
   green: "bg-(--green-dim) text-(--green) border-(--green)/30",
@@ -187,15 +187,20 @@ export function ProgressSteps({
 export function Field({
   label,
   hint,
+  required,
   children,
 }: {
   label: string;
   hint?: string;
+  required?: boolean;
   children: ReactNode;
 }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-(--foreground) mb-1.5">{label}</span>
+      <span className="block text-sm font-medium text-(--foreground) mb-1.5">
+        {label}
+        {required ? <span className="text-(--red)"> *</span> : null}
+      </span>
       {children}
       {hint ? <span className="block mt-1 text-xs text-(--muted)">{hint}</span> : null}
     </label>

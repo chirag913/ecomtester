@@ -88,7 +88,7 @@ export default function NewProductCheckPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Product name">
+            <Field label="Product name" required>
               <input
                 className={inputClass}
                 value={form.productName}
@@ -97,7 +97,7 @@ export default function NewProductCheckPage() {
                 required
               />
             </Field>
-            <Field label="Product category">
+            <Field label="Product category" required>
               <input
                 className={inputClass}
                 value={form.productCategory}
@@ -110,57 +110,65 @@ export default function NewProductCheckPage() {
         </Card>
 
         <Card className="space-y-4">
+          <p className="text-xs text-(--muted-2)">
+            <span className="text-(--red)">*</span> Required — these drive the economics calculation below.
+          </p>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Product cost (₹)">
+            <Field label="Product cost (₹)" required>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 className={inputClass}
+                placeholder="e.g. 300"
                 value={form.productCost}
                 onChange={(e) => set("productCost", e.target.value)}
                 required
               />
             </Field>
-            <Field label="Selling price (₹)">
+            <Field label="Selling price (₹)" required>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 className={inputClass}
+                placeholder="e.g. 900"
                 value={form.sellingPrice}
                 onChange={(e) => set("sellingPrice", e.target.value)}
                 required
               />
             </Field>
-            <Field label="Shipping cost (₹)">
+            <Field label="Shipping cost (₹)" required>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 className={inputClass}
+                placeholder="e.g. 70"
                 value={form.shippingCost}
                 onChange={(e) => set("shippingCost", e.target.value)}
                 required
               />
             </Field>
-            <Field label="Packaging cost (₹)">
+            <Field label="Packaging cost (₹)" required>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 className={inputClass}
+                placeholder="e.g. 15"
                 value={form.packagingCost}
                 onChange={(e) => set("packagingCost", e.target.value)}
                 required
               />
             </Field>
-            <Field label="COD / payment fee (%)" hint="As a % of selling price">
+            <Field label="COD / payment fee (%)" hint="As a % of selling price" required>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 className={inputClass}
+                placeholder="e.g. 2"
                 value={form.paymentFeePct}
                 onChange={(e) => set("paymentFeePct", e.target.value)}
                 required
@@ -187,12 +195,13 @@ export default function NewProductCheckPage() {
                 onChange={(e) => set("otherVariableCost", e.target.value)}
               />
             </Field>
-            <Field label="Daily advertising budget (₹)">
+            <Field label="Daily advertising budget (₹)" required>
               <input
                 type="number"
                 min="0"
                 step="1"
                 className={inputClass}
+                placeholder="e.g. 2000"
                 value={form.dailyAdBudget}
                 onChange={(e) => set("dailyAdBudget", e.target.value)}
                 required
