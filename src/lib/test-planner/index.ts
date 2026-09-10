@@ -1,11 +1,12 @@
 import type { TestPlan, TestTier } from "@/lib/types";
+import { MENTOR_APPROVED } from "@/lib/defaults";
 
-const STANDARD_BUDGET_PER_ADSET = 500;
-const STANDARD_TOTAL = STANDARD_BUDGET_PER_ADSET * 4;
-const LOW_BUDGET_PER_ADSET = 300;
-const LOW_BUDGET_TOTAL = LOW_BUDGET_PER_ADSET * 4;
-const NUM_AD_SETS = 4;
-const LOW_BUDGET_PRICE_CEILING = 999;
+const STANDARD_BUDGET_PER_ADSET = MENTOR_APPROVED.standardBudgetPerAdSet;
+const NUM_AD_SETS = MENTOR_APPROVED.numAdSetsPerTest;
+const STANDARD_TOTAL = STANDARD_BUDGET_PER_ADSET * NUM_AD_SETS;
+const LOW_BUDGET_PER_ADSET = MENTOR_APPROVED.lowBudgetPerAdSet;
+const LOW_BUDGET_TOTAL = LOW_BUDGET_PER_ADSET * NUM_AD_SETS;
+const LOW_BUDGET_PRICE_CEILING = MENTOR_APPROVED.lowBudgetPriceCeiling;
 
 /**
  * Default mentorship test framework. Labeled explicitly as a default

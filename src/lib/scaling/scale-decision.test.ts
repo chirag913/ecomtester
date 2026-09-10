@@ -88,6 +88,34 @@ describe("scale decision", () => {
     expect(result.reasons.join(" ")).toMatch(/have not been confirmed/i);
   });
 
+  it("STRONG_SCALE is achievable at ~100 mature orders (PREFERRED) — does not require the invented 150-order STRONG display threshold", () => {
+    const deliveryValidation = validateDelivery({
+      ordersPlaced: 110,
+      ordersShipped: 110,
+      ordersDelivered: 95,
+      ordersRTO: 10,
+      ordersInTransit: 5,
+    });
+    expect(deliveryValidation.confidence).toBe("PREFERRED"); // exactly the band this test is targeting
+    const realized = calculateRealizedEconomics({
+      revenue: 95 * 900,
+      adSpend: 105 * 150, // well below ceiling -> GREEN cppStatus
+      productCostTotal: 105 * 200,
+      shippingTotal: 105 * 50,
+      rtoCostTotal: 10 * 50,
+      paymentFeesTotal: 95 * 10,
+      refundCostTotal: 0,
+      deliveredOrders: 95,
+    });
+    const result = evaluateScaleDecision({
+      cpp: 150,
+      maxViableCAC: 400,
+      deliveryValidation,
+      realized,
+    });
+    expect(result.state).toBe("STRONG_SCALE");
+  });
+
   it("never recommends SCALE when CPP exceeds maximum viable CAC even with great delivery", () => {
     const deliveryValidation = validateDelivery({
       ordersPlaced: 200,

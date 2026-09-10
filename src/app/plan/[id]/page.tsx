@@ -6,11 +6,12 @@ import { updateProduct, useProduct } from "@/lib/storage";
 import { calculateProductEconomics } from "@/lib/economics";
 import { buildTestPlan } from "@/lib/test-planner";
 import { pickEffectiveRtoEstimate } from "@/lib/research/rto";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
 import { Badge, Card, Field, inputClass, PrimaryButton, SecondaryButton, SectionLabel, StatCard } from "@/components/ui";
 import { AdSetPanel } from "@/components/AdSetPanel";
 import type { AdSet, AdSetDailyMetrics } from "@/lib/types";
 
-const PLACEHOLDER_RTO_PCT = 20;
+const PLACEHOLDER_RTO_PCT = INTERNAL_DEFAULT.placeholderRtoPct;
 
 export default function TestPlanPage() {
   const params = useParams<{ id: string }>();
@@ -41,6 +42,7 @@ export default function TestPlanPage() {
   }
   if (!computed) return null;
   const { economics, testPlan } = computed;
+  const usedPlaceholderRto = !product.rtoResearchEstimate && !product.actualRtoEstimate;
 
   function addAdSet() {
     if (!product || !newAdSetName.trim()) return;
@@ -80,6 +82,20 @@ export default function TestPlanPage() {
           {testPlan.tier.replace("_", " ")} tier
         </Badge>
       </div>
+
+      {usedPlaceholderRto ? (
+        <Card className="mb-8 border-(--yellow)/30">
+          <p className="text-sm text-(--muted)">
+            <span className="text-(--foreground) font-medium">No RTO research or actual data yet.</span>{" "}
+            Maximum viable CAC and the kill rule threshold below use a placeholder assumption of {PLACEHOLDER_RTO_PCT}%
+            RTO — an internal engineering default, not a real estimate. Add RTO research on the{" "}
+            <a href={`/check/${product.id}/research`} className="underline">
+              research step
+            </a>{" "}
+            for a real number.
+          </p>
+        </Card>
+      ) : null}
 
       <section className="mb-8">
         <SectionLabel>Plan</SectionLabel>

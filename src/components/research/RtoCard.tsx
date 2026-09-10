@@ -36,6 +36,7 @@ export function RtoCard({
       high: Number.isFinite(highNum) ? highNum : baseNum,
       confidence,
       reason: reason.trim() || "Category + payment method research.",
+      researchedAt: new Date().toISOString(),
     });
     setShowForm(false);
   }
@@ -64,6 +65,10 @@ export function RtoCard({
             Base estimate: <span className="font-mono-num">{value.base}%</span> (range {value.low}–{value.high}%)
           </div>
           <div className="mt-1 text-(--muted)">{value.reason}</div>
+          <div className="mt-2 text-xs text-(--muted-2)">
+            {value.source === "RESEARCH_ESTIMATE" ? "Researched" : value.source === "VALIDATED" ? "Validated" : "Observed"} on{" "}
+            {new Date(value.researchedAt).toLocaleDateString()}
+          </div>
         </div>
       ) : null}
 

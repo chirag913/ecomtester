@@ -5,12 +5,17 @@ import { evaluateAdSet } from "@/lib/decisions/adset";
 import type { AdSet, AdSetDailyMetrics, AdSetStatus } from "@/lib/types";
 import { Badge, Field, inputClass } from "@/components/ui";
 
-const statusMeta: Record<AdSetStatus, { label: string; color: "green" | "yellow" | "red" | "neutral"; lock: boolean }> = {
-  KILL: { label: "Stop", color: "red", lock: false },
-  GIVE_ANOTHER_DAY: { label: "Give another day", color: "yellow", lock: false },
-  PROMISING: { label: "Promising — do not touch", color: "yellow", lock: true },
-  KEEP_RUNNING: { label: "Keep running — do not touch", color: "green", lock: true },
-  INSUFFICIENT_DATA: { label: "Insufficient data", color: "neutral", lock: false },
+// Label/color are purely cosmetic per status. Whether the ad set is
+// protected from edits comes from the decision engine's own `doNotChange`
+// field (evaluateAdSet), not a second hardcoded copy here — GIVE_ANOTHER_DAY
+// is doNotChange in some cases (e.g. day-1/1-purchase) and not in others
+// (e.g. spend hasn't hit the threshold yet), so it can't be a static map.
+const statusMeta: Record<AdSetStatus, { label: string; color: "green" | "yellow" | "red" | "neutral" }> = {
+  KILL: { label: "Stop", color: "red" },
+  GIVE_ANOTHER_DAY: { label: "Give another day", color: "yellow" },
+  PROMISING: { label: "Promising — do not touch", color: "yellow" },
+  KEEP_RUNNING: { label: "Keep running — do not touch", color: "green" },
+  INSUFFICIENT_DATA: { label: "Insufficient data", color: "neutral" },
 };
 
 export function AdSetPanel({
@@ -62,7 +67,7 @@ export function AdSetPanel({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {meta.lock ? <span title="Do not change">🔒</span> : null}
+          {decision.doNotChange ? <span title="Do not change">🔒</span> : null}
           <Badge color={meta.color}>{meta.label}</Badge>
         </div>
       </div>

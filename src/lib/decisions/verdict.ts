@@ -9,6 +9,19 @@ import type {
   TestPlan,
   Verdict,
 } from "@/lib/types";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
+
+/**
+ * IMPORTANT: the spec gives the top-level category weights below (25/15/15/
+ * 15/10/10/10, summing to 100) as mentorship-approved. It does NOT specify
+ * how points are distributed *within* each category, or where the GREEN/
+ * YELLOW/RED score cutoffs fall. Every breakpoint inside the scoreXxx()
+ * functions below, and INTERNAL_DEFAULT.verdictGreenScoreCutoff /
+ * verdictYellowScoreCutoff, are this build's own invented heuristics —
+ * NOT Chirag-approved numbers. The score is explicitly a summary only; the
+ * verdict's actual RED gate is `economics.maxViableCAC <= 0`, driven by the
+ * deterministic economics engine, not this scoring model.
+ */
 
 export interface VerdictInputs {
   economics: ProductEconomics;
@@ -139,9 +152,9 @@ export function evaluateProductVerdict(inputs: VerdictInputs): ProductVerdictRes
   let verdict: Verdict;
   if (economics.maxViableCAC <= 0) {
     verdict = "RED";
-  } else if (score >= 70) {
+  } else if (score >= INTERNAL_DEFAULT.verdictGreenScoreCutoff) {
     verdict = "GREEN";
-  } else if (score >= 40) {
+  } else if (score >= INTERNAL_DEFAULT.verdictYellowScoreCutoff) {
     verdict = "YELLOW";
   } else {
     verdict = "RED";

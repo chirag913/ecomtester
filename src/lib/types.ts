@@ -107,6 +107,7 @@ export interface RtoEstimate {
   high: number; // %
   confidence: Confidence;
   reason: string;
+  researchedAt: string; // ISO date — every research assumption must be dated
   // Present only when source is ACTUAL_OBSERVED or VALIDATED.
   matureOrders?: number;
   deliveredOrders?: number;
@@ -120,6 +121,7 @@ export interface SaturationAssessment {
   reason: string;
   confidence: Confidence;
   exactAdCountKnown: boolean;
+  researchedAt: string; // ISO date
 }
 
 export interface PricingResearch {
@@ -129,7 +131,9 @@ export interface PricingResearch {
   recommendedTestRangeLow?: number;
   recommendedTestRangeHigh?: number;
   confidence: Confidence;
+  source?: string; // where these prices came from — required for the claim to be trustworthy
   notes?: string;
+  researchedAt: string; // ISO date
 }
 
 // ---------------------------------------------------------------------------

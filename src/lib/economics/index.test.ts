@@ -100,6 +100,36 @@ describe("RTO economics modeling (not a flat selling-price x RTO% deduction)", (
       lowRto.expectedContributionPerShippedOrder,
     );
   });
+
+  it("high RTO (45%) can still be profitable when the rest of the economics are strong — RTO is never an absolute threshold", () => {
+    const strongEconomics: ProductInputs = {
+      ...baseInputs,
+      productCost: 200,
+      sellingPrice: 1500,
+      shippingCost: 50,
+      packagingCost: 10,
+      paymentFeePct: 2,
+      otherVariableCost: 0,
+    };
+    const eco = calculateProductEconomics(strongEconomics, 45);
+    expect(eco.maxViableCAC).toBeGreaterThan(0);
+    expect(eco.expectedContributionPerShippedOrder).toBeGreaterThan(0);
+  });
+
+  it("low RTO (5%) does not guarantee profitability when the underlying cost structure is bad", () => {
+    const weakEconomics: ProductInputs = {
+      ...baseInputs,
+      productCost: 300,
+      sellingPrice: 310, // fails the 3x rule badly
+      shippingCost: 200, // shipping alone nearly matches the margin
+      packagingCost: 50,
+      paymentFeePct: 5,
+      otherVariableCost: 20,
+    };
+    const eco = calculateProductEconomics(weakEconomics, 5);
+    expect(eco.maxViableCAC).toBeLessThanOrEqual(0);
+    expect(eco.expectedContributionPerShippedOrder).toBeLessThan(0);
+  });
 });
 
 describe("maximum viable CAC and break-even CAC", () => {

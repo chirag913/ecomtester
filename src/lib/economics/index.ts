@@ -1,8 +1,9 @@
 import type { EconomicsAssumptions, ProductEconomics, ProductInputs } from "@/lib/types";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
 
-const DEFAULT_COD_MIX_PCT = 100;
-const DEFAULT_RTO_PRODUCT_LOSS_PCT = 10;
-const DEFAULT_TARGET_MARGIN_BUFFER_PCT = 15;
+const DEFAULT_COD_MIX_PCT = INTERNAL_DEFAULT.codMixPct;
+const DEFAULT_RTO_PRODUCT_LOSS_PCT = INTERNAL_DEFAULT.rtoProductLossPct;
+const DEFAULT_TARGET_MARGIN_BUFFER_PCT = INTERNAL_DEFAULT.targetMarginBufferPct;
 
 function clampPct(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -132,12 +133,17 @@ export function calculateProductEconomics(
   };
 }
 
+/**
+ * The 0.85 GREEN/YELLOW split is an internal display default (see
+ * INTERNAL_DEFAULT.cppGreenThresholdPctOfCeiling), not a mentorship rule.
+ * A CPP anywhere at/below maxViableCAC is economically viable either way.
+ */
 export function cppStatus(
   cpp: number,
   maxViableCAC: number,
 ): "GREEN" | "YELLOW" | "RED" {
   if (maxViableCAC <= 0) return "RED";
-  if (cpp <= maxViableCAC * 0.85) return "GREEN";
+  if (cpp <= maxViableCAC * INTERNAL_DEFAULT.cppGreenThresholdPctOfCeiling) return "GREEN";
   if (cpp <= maxViableCAC) return "YELLOW";
   return "RED";
 }

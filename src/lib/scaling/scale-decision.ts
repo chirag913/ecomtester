@@ -1,5 +1,6 @@
 import type { DeliveryValidation, RealizedEconomics, ScaleDecisionResult } from "@/lib/types";
 import { cppStatus } from "@/lib/economics";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
 
 export interface ScaleDecisionInputs {
   cpp: number;
@@ -9,7 +10,7 @@ export interface ScaleDecisionInputs {
   elevatedRefunds?: boolean;
 }
 
-const STRONG_MARGIN_THRESHOLD_PCT = 20;
+const STRONG_MARGIN_THRESHOLD_PCT = INTERNAL_DEFAULT.strongScaleMarginThresholdPct;
 
 /**
  * Scaling is never based on CPP alone. This combines acquisition cost,
@@ -92,7 +93,12 @@ export function evaluateScaleDecision(inputs: ScaleDecisionInputs): ScaleDecisio
   const strongMargin =
     realized.contributionMarginPct != null && realized.contributionMarginPct >= STRONG_MARGIN_THRESHOLD_PCT;
   const stronglyBelowCeiling = cppStatus(cpp, maxViableCAC) === "GREEN";
-  const strongVolume = deliveryValidation.confidence === "STRONG";
+  // Spec: "~100 mature orders: preferred validation... 100+: stronger
+  // confidence" as a continuum, not a second hard cutoff. So STRONG_SCALE
+  // requires the same delivery confirmation as SCALE (PREFERRED or STRONG,
+  // i.e. >=100 orders) — it does NOT require the higher, internally-invented
+  // 150-order "STRONG" display threshold. That threshold is cosmetic only.
+  const strongVolume = deliveryConfirmed;
 
   if (elevatedRefunds) {
     watch.push("Refund rate looks elevated — monitor closely even while scaling.");

@@ -25,11 +25,12 @@ describe("first day exception (scenario 4)", () => {
     expect(decision.status).toBe("GIVE_ANOTHER_DAY");
   });
 
-  it("gives another day when day 1 has 1 purchase with CPP above max viable CAC", () => {
+  it("gives another day when day 1 has 1 purchase with CPP above max viable CAC, and protects it from edits", () => {
     const metrics = [day("2026-01-01", 500, 1)];
     const decision = evaluateAdSet(metrics, 500, 400);
     expect(decision.cpp).toBe(500);
     expect(decision.status).toBe("GIVE_ANOTHER_DAY");
+    expect(decision.doNotChange).toBe(true);
   });
 });
 

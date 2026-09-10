@@ -1,23 +1,30 @@
 import type { RtoEstimate } from "@/lib/types";
-
-const MIN_MATURE_ORDERS_FOR_VALIDATION = 30;
+import { INTERNAL_DEFAULT, MENTOR_APPROVED } from "@/lib/defaults";
 
 /**
  * Actual observed RTO always overrides a research estimate. Once enough
- * mature orders exist, the observation is promoted to "validated".
+ * mature orders exist, the observation is promoted to "validated". The
+ * ACTUAL_OBSERVED -> VALIDATED cutoff (INTERNAL_DEFAULT.actualRtoValidatedMatureOrders)
+ * is this build's own default, not a number Chirag gave.
  */
 export function buildRtoEstimateFromActual(deliveredOrders: number, rtoOrders: number): RtoEstimate {
   const mature = deliveredOrders + rtoOrders;
   const basePct = mature > 0 ? (rtoOrders / mature) * 100 : 0;
-  const isValidated = mature >= MIN_MATURE_ORDERS_FOR_VALIDATION * 2; // ~60+ mature orders before we call it "validated"
+  const isValidated = mature >= INTERNAL_DEFAULT.actualRtoValidatedMatureOrders;
 
   return {
     source: isValidated ? "VALIDATED" : "ACTUAL_OBSERVED",
     low: basePct,
     base: basePct,
     high: basePct,
-    confidence: mature >= 100 ? "HIGH" : mature >= MIN_MATURE_ORDERS_FOR_VALIDATION ? "MEDIUM" : "LOW",
+    confidence:
+      mature >= MENTOR_APPROVED.preferredValidationMatureOrders
+        ? "HIGH"
+        : mature >= MENTOR_APPROVED.initialSignalMatureOrders
+          ? "MEDIUM"
+          : "LOW",
     reason: `Based on ${mature} mature order(s): ${deliveredOrders} delivered, ${rtoOrders} RTO.`,
+    researchedAt: new Date().toISOString(),
     matureOrders: mature,
     deliveredOrders,
     rtoOrders,

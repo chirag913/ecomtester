@@ -16,8 +16,8 @@ const initialState: FormState = {
   productCost: "",
   sellingPrice: "",
   shippingCost: "",
-  packagingCost: "",
-  paymentFeePct: "",
+  packagingCost: "0",
+  paymentFeePct: "0",
   otherVariableCost: "0",
   expectedDiscountPct: "0",
   dailyAdBudget: "",
@@ -41,6 +41,7 @@ function num(v: string): number {
 export default function NewProductCheckPage() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initialState);
+  const [showOtherCosts, setShowOtherCosts] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
 
@@ -150,51 +151,6 @@ export default function NewProductCheckPage() {
                 required
               />
             </Field>
-            <Field label="Packaging cost (₹)" required>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={inputClass}
-                placeholder="e.g. 15"
-                value={form.packagingCost}
-                onChange={(e) => set("packagingCost", e.target.value)}
-                required
-              />
-            </Field>
-            <Field label="COD / payment fee (%)" hint="As a % of selling price" required>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={inputClass}
-                placeholder="e.g. 2"
-                value={form.paymentFeePct}
-                onChange={(e) => set("paymentFeePct", e.target.value)}
-                required
-              />
-            </Field>
-            <Field label="Expected discount (%)">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                className={inputClass}
-                value={form.expectedDiscountPct}
-                onChange={(e) => set("expectedDiscountPct", e.target.value)}
-              />
-            </Field>
-            <Field label="Other variable cost (₹)">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={inputClass}
-                value={form.otherVariableCost}
-                onChange={(e) => set("otherVariableCost", e.target.value)}
-              />
-            </Field>
             <Field label="Daily advertising budget (₹)" required>
               <input
                 type="number"
@@ -209,6 +165,69 @@ export default function NewProductCheckPage() {
             </Field>
           </div>
         </Card>
+
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowOtherCosts((s) => !s)}
+            className="text-sm text-(--muted) underline underline-offset-2 hover:text-(--foreground)"
+          >
+            {showOtherCosts ? "Hide other costs" : "Other costs (packaging, payment fees, discount)"}
+          </button>
+          {showOtherCosts ? (
+            <Card className="mt-3 space-y-4">
+              <p className="text-xs text-(--muted-2)">
+                Optional — each defaults to ₹0 / 0% if left blank. They matter for accuracy (especially COD fees),
+                so add them once you know your real numbers.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Packaging cost (₹)">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className={inputClass}
+                    placeholder="e.g. 15"
+                    value={form.packagingCost}
+                    onChange={(e) => set("packagingCost", e.target.value)}
+                  />
+                </Field>
+                <Field label="COD / payment fee (%)" hint="As a % of selling price">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className={inputClass}
+                    placeholder="e.g. 2"
+                    value={form.paymentFeePct}
+                    onChange={(e) => set("paymentFeePct", e.target.value)}
+                  />
+                </Field>
+                <Field label="Expected discount (%)">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className={inputClass}
+                    value={form.expectedDiscountPct}
+                    onChange={(e) => set("expectedDiscountPct", e.target.value)}
+                  />
+                </Field>
+                <Field label="Other variable cost (₹)">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className={inputClass}
+                    value={form.otherVariableCost}
+                    onChange={(e) => set("otherVariableCost", e.target.value)}
+                  />
+                </Field>
+              </div>
+            </Card>
+          ) : null}
+        </div>
 
         <div>
           <button

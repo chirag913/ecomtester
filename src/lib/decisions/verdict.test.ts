@@ -25,9 +25,9 @@ describe("product verdict", () => {
       economics,
       testPlan,
       supplierAvailable: true,
-      saturation: { verdict: "GREEN", reason: "Active current advertisers found", confidence: "MEDIUM", exactAdCountKnown: false },
-      pricing: { recommendedTestRangeLow: 800, recommendedTestRangeHigh: 1000, confidence: "MEDIUM" },
-      rtoEstimate: { source: "RESEARCH_ESTIMATE", low: 15, base: 20, high: 27, confidence: "MEDIUM", reason: "Category benchmark" },
+      saturation: { verdict: "GREEN", reason: "Active current advertisers found", confidence: "MEDIUM", exactAdCountKnown: false, researchedAt: new Date().toISOString() },
+      pricing: { recommendedTestRangeLow: 800, recommendedTestRangeHigh: 1000, confidence: "MEDIUM", researchedAt: new Date().toISOString() },
+      rtoEstimate: { source: "RESEARCH_ESTIMATE", low: 15, base: 20, high: 27, confidence: "MEDIUM", reason: "Category benchmark", researchedAt: new Date().toISOString() },
     });
     expect(result.verdict).not.toBe("RED");
     expect(result.score).toBeGreaterThan(0);
@@ -55,5 +55,45 @@ describe("product verdict", () => {
     const testPlan = buildTestPlan(baseInputs.dailyAdBudget, economics.maxViableCAC, baseInputs.sellingPrice);
     const result = evaluateProductVerdict({ economics, testPlan });
     expect(result.confidence).toBe("LOW");
+  });
+
+  it("high RTO with strong economics is not forced to RED — RTO is evaluated together with economics, not as a standalone threshold", () => {
+    const strongInputs = {
+      ...baseInputs,
+      productCost: 200,
+      sellingPrice: 1500,
+      shippingCost: 50,
+      packagingCost: 10,
+      paymentFeePct: 2,
+      otherVariableCost: 0,
+    };
+    const economics = calculateProductEconomics(strongInputs, 45); // 45% RTO
+    const testPlan = buildTestPlan(strongInputs.dailyAdBudget, economics.maxViableCAC, strongInputs.sellingPrice);
+    const result = evaluateProductVerdict({
+      economics,
+      testPlan,
+      rtoEstimate: { source: "RESEARCH_ESTIMATE", low: 40, base: 45, high: 50, confidence: "HIGH", reason: "test", researchedAt: new Date().toISOString() },
+    });
+    expect(result.verdict).not.toBe("RED");
+  });
+
+  it("low RTO with weak economics does not force GREEN — a cheap-looking RTO number is not a green light on its own", () => {
+    const weakInputs = {
+      ...baseInputs,
+      productCost: 300,
+      sellingPrice: 310,
+      shippingCost: 200,
+      packagingCost: 50,
+      paymentFeePct: 5,
+      otherVariableCost: 20,
+    };
+    const economics = calculateProductEconomics(weakInputs, 5); // 5% RTO
+    const testPlan = buildTestPlan(weakInputs.dailyAdBudget, economics.maxViableCAC, weakInputs.sellingPrice);
+    const result = evaluateProductVerdict({
+      economics,
+      testPlan,
+      rtoEstimate: { source: "RESEARCH_ESTIMATE", low: 3, base: 5, high: 8, confidence: "HIGH", reason: "test", researchedAt: new Date().toISOString() },
+    });
+    expect(result.verdict).toBe("RED");
   });
 });

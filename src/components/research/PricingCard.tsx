@@ -24,6 +24,7 @@ export function PricingCard({
   const [rangeLow, setRangeLow] = useState(value?.recommendedTestRangeLow?.toString() ?? "");
   const [rangeHigh, setRangeHigh] = useState(value?.recommendedTestRangeHigh?.toString() ?? "");
   const [confidence, setConfidence] = useState<Confidence>(value?.confidence ?? "MEDIUM");
+  const [source, setSource] = useState(value?.source ?? "");
   const [notes, setNotes] = useState(value?.notes ?? "");
 
   function n(v: string): number | undefined {
@@ -39,7 +40,9 @@ export function PricingCard({
       recommendedTestRangeLow: n(rangeLow),
       recommendedTestRangeHigh: n(rangeHigh),
       confidence,
+      source: source.trim() || undefined,
       notes: notes.trim() || undefined,
+      researchedAt: new Date().toISOString(),
     });
     setShowForm(false);
   }
@@ -52,26 +55,33 @@ export function PricingCard({
       </div>
 
       {value ? (
-        <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          <div>
-            <div className="text-xs text-(--muted-2) uppercase tracking-wide">Low</div>
-            <div className="font-mono-num">{value.lowMarketPrice != null ? `₹${value.lowMarketPrice}` : "—"}</div>
-          </div>
-          <div>
-            <div className="text-xs text-(--muted-2) uppercase tracking-wide">Common</div>
-            <div className="font-mono-num">{value.commonPrice != null ? `₹${value.commonPrice}` : "—"}</div>
-          </div>
-          <div>
-            <div className="text-xs text-(--muted-2) uppercase tracking-wide">Premium</div>
-            <div className="font-mono-num">{value.premiumPrice != null ? `₹${value.premiumPrice}` : "—"}</div>
-          </div>
-          <div>
-            <div className="text-xs text-(--muted-2) uppercase tracking-wide">Test range</div>
-            <div className="font-mono-num">
-              {value.recommendedTestRangeLow != null && value.recommendedTestRangeHigh != null
-                ? `₹${value.recommendedTestRangeLow}–${value.recommendedTestRangeHigh}`
-                : "—"}
+        <div className="mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div>
+              <div className="text-xs text-(--muted-2) uppercase tracking-wide">Low</div>
+              <div className="font-mono-num">{value.lowMarketPrice != null ? `₹${value.lowMarketPrice}` : "—"}</div>
             </div>
+            <div>
+              <div className="text-xs text-(--muted-2) uppercase tracking-wide">Common</div>
+              <div className="font-mono-num">{value.commonPrice != null ? `₹${value.commonPrice}` : "—"}</div>
+            </div>
+            <div>
+              <div className="text-xs text-(--muted-2) uppercase tracking-wide">Premium</div>
+              <div className="font-mono-num">{value.premiumPrice != null ? `₹${value.premiumPrice}` : "—"}</div>
+            </div>
+            <div>
+              <div className="text-xs text-(--muted-2) uppercase tracking-wide">Test range</div>
+              <div className="font-mono-num">
+                {value.recommendedTestRangeLow != null && value.recommendedTestRangeHigh != null
+                  ? `₹${value.recommendedTestRangeLow}–${value.recommendedTestRangeHigh}`
+                  : "—"}
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-(--muted-2)">
+            <span>Source: {value.source || "not recorded"}</span>
+            <span>·</span>
+            <span>Researched {new Date(value.researchedAt).toLocaleDateString()}</span>
           </div>
         </div>
       ) : (
@@ -130,6 +140,14 @@ export function PricingCard({
               <input type="number" min="0" className={inputClass} value={rangeHigh} onChange={(e) => setRangeHigh(e.target.value)} />
             </Field>
           </div>
+          <Field label="Source">
+            <input
+              className={inputClass}
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder="e.g. Amazon.in, Flipkart, Meesho"
+            />
+          </Field>
           <Field label="Confidence">
             <select className={inputClass} value={confidence} onChange={(e) => setConfidence(e.target.value as Confidence)}>
               <option value="HIGH">High</option>

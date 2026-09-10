@@ -5,13 +5,14 @@ import { useParams } from "next/navigation";
 import { updateProduct, useProduct, type StoredProduct } from "@/lib/storage";
 import { calculateProductEconomics } from "@/lib/economics";
 import { validateDelivery } from "@/lib/scaling/delivery";
-import { calculateRealizedEconomics } from "@/lib/scaling/realized";
+import { calculateRealizedEconomics, isElevatedRefunds } from "@/lib/scaling/realized";
 import { evaluateScaleDecision } from "@/lib/scaling/scale-decision";
 import { buildRtoEstimateFromActual, pickEffectiveRtoEstimate } from "@/lib/research/rto";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
 import { Badge, Card, Field, inputClass, PrimaryButton, SecondaryButton, SectionLabel, StatCard } from "@/components/ui";
 import type { DeliveryMetrics, RealizedEconomicsInputs } from "@/lib/types";
 
-const PLACEHOLDER_RTO_PCT = 20;
+const PLACEHOLDER_RTO_PCT = INTERNAL_DEFAULT.placeholderRtoPct;
 
 type DeliveryForm = { [K in keyof DeliveryMetrics]: string };
 type RealizedForm = { [K in keyof RealizedEconomicsInputs]: string };
@@ -168,6 +169,8 @@ export default function ScalePage() {
     return calculateProductEconomics(product.inputs, effectiveRto?.base ?? PLACEHOLDER_RTO_PCT);
   }, [product]);
 
+  const usedPlaceholderRto = !product?.rtoResearchEstimate && !product?.actualRtoEstimate;
+
   if (!product) {
     return (
       <main className="flex-1 mx-auto max-w-xl px-6 py-16 text-center">
@@ -201,10 +204,7 @@ export default function ScalePage() {
   };
   const realized = calculateRealizedEconomics(realizedInputs);
 
-  const elevatedRefunds =
-    realizedInputs.refundCostTotal > 0 &&
-    realizedInputs.revenue > 0 &&
-    (realizedInputs.refundCostTotal / realizedInputs.revenue) * 100 > 5;
+  const elevatedRefunds = isElevatedRefunds(realizedInputs.refundCostTotal, realizedInputs.revenue);
 
   const cpp = aggregateCpp ?? 0;
   const hasAdData = aggregateCpp != null;
@@ -242,6 +242,79 @@ export default function ScalePage() {
         <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Scale decision</div>
         <h1 className="text-2xl font-semibold">{product.inputs.productName}</h1>
       </div>
+
+      {usedPlaceholderRto ? (
+        <Card className="mb-8 border-(--yellow)/30">
+          <p className="text-sm text-(--muted)">
+            <span className="text-(--foreground) font-medium">No RTO research or actual data yet.</span>{" "}
+            The economics below (max viable CAC, etc.) use a placeholder assumption of {PLACEHOLDER_RTO_PCT}% RTO — an
+            internal engineering default, not a real estimate. Enter delivery data below to replace it with your
+            actual observed rate.
+          </p>
+        </Card>
+      ) : null}
+
+      <section className="mb-10">
+        <SectionLabel>Product status</SectionLabel>
+        {!hasAdData ? (
+          <Card>
+            <p className="text-sm text-(--muted)">
+              No ad set spend/purchase data yet. Log ad set metrics on the{" "}
+              <a href={`/plan/${product.id}`} className="underline">
+                test plan page
+              </a>{" "}
+              first.
+            </p>
+          </Card>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <Badge color={stateBadge[scaleDecision!.state]} className="text-sm px-4 py-1.5">
+                {stateLabel[scaleDecision!.state]}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+              <StatCard label="CPP" value={`₹${cpp.toFixed(0)}`} />
+              <StatCard label="Max viable CAC" value={`₹${economics.maxViableCAC.toFixed(0)}`} />
+              <StatCard label="Mature orders" value={deliveryValidation.matureOrderCount} />
+            </div>
+            <Card className="mb-4 border-(--foreground)/20">
+              <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Next action</div>
+              <p className="text-base font-medium text-(--foreground)">{scaleDecision!.nextAction}</p>
+            </Card>
+            <Card className="mb-4">
+              <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Why</div>
+              <div className="space-y-1">
+                {scaleDecision!.reasons.map((r) => (
+                  <p key={r} className="text-sm text-(--foreground)">
+                    {r}
+                  </p>
+                ))}
+              </div>
+            </Card>
+            {scaleDecision!.doNotDo.length > 0 ? (
+              <Card className="mb-4 border-(--red)/20">
+                <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Do not do this</div>
+                {scaleDecision!.doNotDo.map((d) => (
+                  <p key={d} className="text-sm text-(--red)">
+                    {d}
+                  </p>
+                ))}
+              </Card>
+            ) : null}
+            {scaleDecision!.watch.length > 0 ? (
+              <Card className="border-(--yellow)/20">
+                <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Watch</div>
+                {scaleDecision!.watch.map((w) => (
+                  <p key={w} className="text-sm text-(--yellow)">
+                    {w}
+                  </p>
+                ))}
+              </Card>
+            ) : null}
+          </>
+        )}
+      </section>
 
       <section className="mb-10">
         <SectionLabel>Delivery / RTO validation</SectionLabel>
@@ -295,68 +368,6 @@ export default function ScalePage() {
             value={realized.contributionMarginPct != null ? `${realized.contributionMarginPct.toFixed(1)}%` : "N/A"}
           />
         </div>
-      </section>
-
-      <section className="mb-10">
-        <SectionLabel>Product status</SectionLabel>
-        {!hasAdData ? (
-          <Card>
-            <p className="text-sm text-(--muted)">
-              No ad set spend/purchase data yet. Log ad set metrics on the{" "}
-              <a href={`/plan/${product.id}`} className="underline">
-                test plan page
-              </a>{" "}
-              first.
-            </p>
-          </Card>
-        ) : (
-          <>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge color={stateBadge[scaleDecision!.state]} className="text-sm px-4 py-1.5">
-                {stateLabel[scaleDecision!.state]}
-              </Badge>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-              <StatCard label="CPP" value={`₹${cpp.toFixed(0)}`} />
-              <StatCard label="Max viable CAC" value={`₹${economics.maxViableCAC.toFixed(0)}`} />
-              <StatCard label="Mature orders" value={deliveryValidation.matureOrderCount} />
-            </div>
-            <Card className="mb-4">
-              <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Why</div>
-              <div className="space-y-1">
-                {scaleDecision!.reasons.map((r) => (
-                  <p key={r} className="text-sm text-(--foreground)">
-                    {r}
-                  </p>
-                ))}
-              </div>
-            </Card>
-            <Card className="mb-4 border-(--foreground)/20">
-              <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Next action</div>
-              <p className="text-base font-medium text-(--foreground)">{scaleDecision!.nextAction}</p>
-            </Card>
-            {scaleDecision!.doNotDo.length > 0 ? (
-              <Card className="mb-4 border-(--red)/20">
-                <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Do not do this</div>
-                {scaleDecision!.doNotDo.map((d) => (
-                  <p key={d} className="text-sm text-(--red)">
-                    {d}
-                  </p>
-                ))}
-              </Card>
-            ) : null}
-            {scaleDecision!.watch.length > 0 ? (
-              <Card className="border-(--yellow)/20">
-                <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Watch</div>
-                {scaleDecision!.watch.map((w) => (
-                  <p key={w} className="text-sm text-(--yellow)">
-                    {w}
-                  </p>
-                ))}
-              </Card>
-            ) : null}
-          </>
-        )}
       </section>
 
       <div className="flex items-center justify-between">

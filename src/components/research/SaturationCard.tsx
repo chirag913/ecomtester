@@ -31,7 +31,7 @@ export function SaturationCard({
 
   function handleSave() {
     if (!reason.trim()) return;
-    onSave({ verdict, reason: reason.trim(), confidence, exactAdCountKnown });
+    onSave({ verdict, reason: reason.trim(), confidence, exactAdCountKnown, researchedAt: new Date().toISOString() });
     setShowForm(false);
   }
 
@@ -50,6 +50,7 @@ export function SaturationCard({
               {value.confidence} confidence
             </Badge>
             {!value.exactAdCountKnown ? <span>Exact ad count could not be reliably determined.</span> : null}
+            <span>Researched {new Date(value.researchedAt).toLocaleDateString()}</span>
           </div>
         </div>
       ) : (

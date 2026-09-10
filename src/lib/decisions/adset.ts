@@ -1,4 +1,5 @@
 import type { AdSetDailyMetrics, AdSetDecision } from "@/lib/types";
+import { INTERNAL_DEFAULT, MENTOR_APPROVED } from "@/lib/defaults";
 
 /**
  * Kill / continue / promising logic for a single ad set, evaluated against
@@ -17,7 +18,7 @@ import type { AdSetDailyMetrics, AdSetDecision } from "@/lib/types";
  * - INSUFFICIENT_DATA: not enough spend yet to make any call.
  */
 
-const MIN_PURCHASES_FOR_CONFIDENT_CALL = 3;
+const MIN_PURCHASES_FOR_CONFIDENT_CALL = INTERNAL_DEFAULT.minPurchasesForConfidentCall;
 
 export function evaluateAdSet(
   metrics: AdSetDailyMetrics[],
@@ -35,7 +36,7 @@ export function evaluateAdSet(
   const threshold =
     Number.isFinite(economicTestingThreshold) && economicTestingThreshold > 0
       ? economicTestingThreshold
-      : 500;
+      : MENTOR_APPROVED.defaultKillThresholdRupees;
 
   // No purchases at all.
   if (totalPurchases === 0) {
@@ -98,8 +99,8 @@ export function evaluateAdSet(
       totalPurchases,
       daysRunning,
       reasons,
-      nextAction: "Give this ad set another day of data, then reassess.",
-      doNotChange: false,
+      nextAction: "Give this ad set another day of data, then reassess. Don't edit it while you wait.",
+      doNotChange: true,
     };
   }
 

@@ -7,8 +7,9 @@ import { buildTestPlan } from "@/lib/test-planner";
 import { evaluateProductVerdict } from "@/lib/decisions/verdict";
 import { pickEffectiveRtoEstimate } from "@/lib/research/rto";
 import { Badge, verdictColor, type StatusColor } from "@/components/ui";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
 
-const PLACEHOLDER_RTO_PCT = 20;
+const PLACEHOLDER_RTO_PCT = INTERNAL_DEFAULT.placeholderRtoPct;
 
 interface Step {
   n: number;

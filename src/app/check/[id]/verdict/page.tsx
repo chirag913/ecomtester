@@ -7,9 +7,10 @@ import { calculateProductEconomics } from "@/lib/economics";
 import { buildTestPlan } from "@/lib/test-planner";
 import { evaluateProductVerdict } from "@/lib/decisions/verdict";
 import { pickEffectiveRtoEstimate } from "@/lib/research/rto";
+import { INTERNAL_DEFAULT } from "@/lib/defaults";
 import { Badge, Card, PrimaryButton, ProgressSteps, SecondaryButton, SectionLabel, StatCard, verdictColor } from "@/components/ui";
 
-const PLACEHOLDER_RTO_PCT = 20;
+const PLACEHOLDER_RTO_PCT = INTERNAL_DEFAULT.placeholderRtoPct;
 
 export default function VerdictPage() {
   const params = useParams<{ id: string }>();
@@ -66,6 +67,11 @@ export default function VerdictPage() {
           Score is a summary only. The underlying economics and evidence below determine the decision.
         </p>
       </div>
+
+      <Card className="mb-8 border-(--foreground)/20">
+        <div className="text-xs uppercase tracking-widest text-(--muted-2) mb-2">Next action</div>
+        <p className="text-base font-medium text-(--foreground)">{verdict.nextAction}</p>
+      </Card>
 
       {!economics.passes3xRule ? (
         <Card className="mb-6 border-(--yellow)/30">
@@ -135,8 +141,9 @@ export default function VerdictPage() {
           />
         </div>
         <p className="mt-3 text-xs text-(--muted-2)">
-          Assumptions: reverse shipping {money(economics.assumptions.reverseShippingCost)}, COD mix{" "}
-          {economics.assumptions.codMixPct}%, RTO product loss {economics.assumptions.rtoProductLossPct}%,
+          Internal default assumptions (not mentorship-approved numbers — edit them under &quot;Advanced RTO /
+          economics assumptions&quot; if you know your real figures): reverse shipping {money(economics.assumptions.reverseShippingCost)},
+          COD mix {economics.assumptions.codMixPct}%, RTO product loss {economics.assumptions.rtoProductLossPct}%,
           margin buffer {economics.assumptions.targetMarginBufferPct}% below break-even.
         </p>
       </section>
@@ -168,6 +175,10 @@ export default function VerdictPage() {
             <div className="text-sm">
               <Badge color={verdictColor(product.saturation.verdict)}>{product.saturation.verdict}</Badge>
               <p className="mt-2 text-(--foreground)">{product.saturation.reason}</p>
+              <p className="mt-2 text-xs text-(--muted-2)">
+                Confidence: {product.saturation.confidence} · Researched{" "}
+                {new Date(product.saturation.researchedAt).toLocaleDateString()}
+              </p>
             </div>
           ) : (
             <p className="text-sm text-(--muted)">No saturation research added yet.</p>
@@ -200,6 +211,10 @@ export default function VerdictPage() {
                     : "—"}
                 </div>
               </div>
+              <div className="col-span-2 sm:col-span-4 text-xs text-(--muted-2) mt-1">
+                Source: {product.pricing.source || "not recorded"} · Confidence: {product.pricing.confidence} · Researched{" "}
+                {new Date(product.pricing.researchedAt).toLocaleDateString()}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-(--muted)">No pricing research added yet.</p>
@@ -225,13 +240,6 @@ export default function VerdictPage() {
               {verdict.whatCouldMakeItViable}
             </p>
           ) : null}
-        </Card>
-      </section>
-
-      <section className="mb-10">
-        <SectionLabel>Next action</SectionLabel>
-        <Card className="border-(--foreground)/20">
-          <p className="text-base font-medium text-(--foreground)">{verdict.nextAction}</p>
         </Card>
       </section>
 

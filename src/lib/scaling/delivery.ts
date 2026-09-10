@@ -1,10 +1,17 @@
 import type { DeliveryMetrics, DeliveryValidation, ValidationConfidence } from "@/lib/types";
+import { INTERNAL_DEFAULT, MENTOR_APPROVED } from "@/lib/defaults";
 
 /**
  * Delivery/RTO validation. Orders "in transit" are neither delivered nor RTO
- * and must never be counted as mature. Preferred validation framework:
- * 30-50 mature orders = initial signal, ~100 = preferred, 100+ = stronger
- * confidence. These are guidance thresholds, not hard cutoffs.
+ * and must never be counted as mature.
+ *
+ * Chirag's spec gives two mature-order bands: "30-50 mature orders: initial
+ * signal" and "~100 mature orders: preferred validation" — explicitly as
+ * guidance, not hard cutoffs ("do not force exactly 100 as an absolute
+ * rule"). A fourth "STRONG" label at 150+ orders is this build's own
+ * invention for display purposes only (INTERNAL_DEFAULT.strongConfidenceMatureOrders)
+ * — it does not gate the scale decision, which only requires PREFERRED
+ * (>=100) or better; see scaling/scale-decision.ts.
  */
 export function validateDelivery(metrics: DeliveryMetrics): DeliveryValidation {
   const delivered = Math.max(0, metrics.ordersDelivered);
@@ -15,19 +22,15 @@ export function validateDelivery(metrics: DeliveryMetrics): DeliveryValidation {
   const observedRtoRate = matureOrderCount > 0 ? rto / matureOrderCount : null;
 
   let confidence: ValidationConfidence;
-  if (matureOrderCount < 30) {
+  if (matureOrderCount < MENTOR_APPROVED.initialSignalMatureOrders) {
     confidence = "NONE";
-  } else if (matureOrderCount < 50) {
+  } else if (matureOrderCount < MENTOR_APPROVED.preferredValidationMatureOrders) {
     confidence = "INITIAL";
-  } else if (matureOrderCount < 100) {
-    confidence = "INITIAL";
+  } else if (matureOrderCount < INTERNAL_DEFAULT.strongConfidenceMatureOrders) {
+    confidence = "PREFERRED";
   } else {
-    confidence = matureOrderCount >= 100 ? "STRONG" : "PREFERRED";
+    confidence = "STRONG";
   }
-  // Explicit banding per spec: 30-50 initial, ~100 preferred, 100+ stronger.
-  if (matureOrderCount >= 30 && matureOrderCount < 100) confidence = "INITIAL";
-  if (matureOrderCount >= 100) confidence = "PREFERRED";
-  if (matureOrderCount >= 150) confidence = "STRONG";
 
   const notes: string[] = [];
   if (metrics.ordersInTransit > 0) {
@@ -45,7 +48,10 @@ export function validateDelivery(metrics: DeliveryMetrics): DeliveryValidation {
     notes.push("Strong confidence — sufficient mature order volume to trust this delivery rate.");
   }
 
-  const readyForScaleConsideration = confidence !== "NONE";
+  // Matches the actual gate scale-decision.ts uses (PREFERRED or STRONG).
+  // INITIAL is explicitly "a signal, not full validation" per the spec, so
+  // it is not considered ready on its own.
+  const readyForScaleConsideration = confidence === "PREFERRED" || confidence === "STRONG";
 
   return {
     matureOrderCount,
